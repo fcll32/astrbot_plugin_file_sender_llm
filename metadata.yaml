@@ -1,0 +1,5 @@
+name: astrbot_plugin_file_sender_llm
+author: AstrBotPluginPlanner
+description: 基于 LLM 工具调用的本地文件发送插件。通过自然语言自动识别“发送文件”意图，在白名单目录内进行安全检索、模糊匹配与文件下发；不依赖传统命令，强调路径边界校验、最小权限与合规使用。；新增：可配置文件发送权限（默认所有人可用）。
+version: 1.1.0
+repo: https://github.com/example/astrbot_plugin_file_sender_llm

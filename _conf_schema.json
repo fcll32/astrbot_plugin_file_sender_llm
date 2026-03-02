@@ -1,0 +1,299 @@
+{
+  "allowed_root_dirs": {
+    "description": "允许检索与发送文件的白名单根目录列表",
+    "type": "list",
+    "hint": "仅会在这些目录内检索文件。建议填写业务专用目录绝对路径，如 /data/biz_docs。",
+    "default": [],
+    "obvious_hint": true
+  },
+  "auto_trigger": {
+    "description": "是否在收到平台消息后自动进行文件发送意图识别",
+    "type": "bool",
+    "hint": "开启后无需命令，用户自然语言即可触发 LLM 工具流程。",
+    "default": true
+  },
+  "match_policy": {
+    "description": "文件检索与匹配策略",
+    "type": "object",
+    "hint": "控制精确匹配、模糊匹配与候选返回行为。",
+    "items": {
+      "enable_fuzzy_match": {
+        "description": "是否启用文件名模糊匹配",
+        "type": "bool",
+        "hint": "精确匹配失败后使用相似度匹配。",
+        "default": true
+      },
+      "fuzzy_min_score": {
+        "description": "模糊匹配最低相似度阈值",
+        "type": "float",
+        "hint": "建议范围 0.0~1.0；越高越严格。",
+        "default": 0.72
+      },
+      "max_candidates": {
+        "description": "模糊匹配最多返回候选数量",
+        "type": "int",
+        "hint": "候选过多会影响确认效率，建议 3~10。",
+        "default": 5
+      },
+      "auto_send_on_single_high_confidence": {
+        "description": "单一高置信候选时是否自动发送",
+        "type": "bool",
+        "hint": "开启后命中 1 个高置信文件将直接发送。",
+        "default": true
+      },
+      "high_confidence_threshold": {
+        "description": "自动发送所需高置信阈值",
+        "type": "float",
+        "hint": "建议范围 0.8~0.98。",
+        "default": 0.9
+      },
+      "include_subdirectories": {
+        "description": "检索时是否递归子目录",
+        "type": "bool",
+        "hint": "开启可提升命中率，但会增加检索范围与耗时。",
+        "default": true
+      },
+      "case_sensitive_match": {
+        "description": "匹配是否区分大小写",
+        "type": "bool",
+        "hint": "跨平台场景建议关闭。",
+        "default": false
+      },
+      "prefer_latest_when_query_contains_latest": {
+        "description": "当用户表达“最新”时是否优先最新文件",
+        "type": "bool",
+        "hint": "根据文件修改时间或名称版本信息排序。",
+        "default": true
+      }
+    }
+  },
+  "confirmation_policy": {
+    "description": "歧义确认策略",
+    "type": "object",
+    "hint": "处理多候选命中时的用户确认逻辑。",
+    "items": {
+      "require_confirmation_on_ambiguous": {
+        "description": "多候选时是否要求二次确认",
+        "type": "bool",
+        "hint": "建议开启以降低误发风险。",
+        "default": true
+      },
+      "confirmation_timeout_sec": {
+        "description": "二次确认超时时间（秒）",
+        "type": "int",
+        "hint": "超时后会话确认流程自动结束。",
+        "default": 120
+      }
+    }
+  },
+  "file_policy": {
+    "description": "可发送文件策略",
+    "type": "object",
+    "hint": "限制文件类型与大小，降低误发与滥用风险。",
+    "items": {
+      "allowed_file_extensions": {
+        "description": "允许发送的文件扩展名白名单",
+        "type": "list",
+        "hint": "示例：.pdf、.docx、.xlsx、.md；建议按业务最小化配置。",
+        "default": [
+          ".pdf",
+          ".doc",
+          ".docx",
+          ".xls",
+          ".xlsx",
+          ".ppt",
+          ".pptx",
+          ".txt",
+          ".md",
+          ".csv",
+          ".zip"
+        ]
+      },
+      "max_file_size_mb": {
+        "description": "允许发送的单文件最大大小（MB）",
+        "type": "int",
+        "hint": "需结合消息平台限制设置。",
+        "default": 30
+      },
+      "deny_hidden_files": {
+        "description": "是否禁止发送隐藏文件",
+        "type": "bool",
+        "hint": "建议开启，避免误发系统或敏感文件。",
+        "default": true
+      }
+    }
+  },
+  "security_policy": {
+    "description": "安全与合规控制策略",
+    "type": "object",
+    "hint": "默认开启严格模式，防止越权访问与危险行为。",
+    "items": {
+      "strict_path_boundary_check": {
+        "description": "严格校验目标路径必须在白名单目录内",
+        "type": "bool",
+        "hint": "核心安全开关，强烈建议保持开启。",
+        "default": true,
+        "obvious_hint": false,
+        "hidden": true
+      },
+      "deny_parent_path_escape": {
+        "description": "拒绝使用 .. 等上级目录逃逸",
+        "type": "bool",
+        "hint": "防止路径穿越访问白名单外目录。",
+        "default": true,
+        "hidden": true,
+        "obvious_hint": false
+      },
+      "deny_absolute_path_from_user": {
+        "description": "拒绝直接使用用户提供的绝对路径",
+        "type": "bool",
+        "hint": "仅允许基于关键词检索，避免绕过检索策略。",
+        "default": true,
+        "hidden": true,
+        "obvious_hint": false
+      },
+      "deny_symlink_target_outside_root": {
+        "description": "拒绝符号链接指向白名单外目标",
+        "type": "bool",
+        "hint": "防止通过软链接实现越权访问。",
+        "default": true,
+        "hidden": true,
+        "obvious_hint": false
+      },
+      "forbid_network_actions": {
+        "description": "禁止任何网络请求相关行为",
+        "type": "bool",
+        "hint": "插件仅处理本地文件发送，不进行联网操作。",
+        "default": true,
+        "hidden": true,
+        "obvious_hint": false
+      },
+      "forbid_dangerous_execution": {
+        "description": "禁止危险执行与破坏性行为",
+        "type": "bool",
+        "hint": "禁止 eval/exec、恶意代码、删除篡改文件等行为。",
+        "default": true,
+        "hidden": true,
+        "obvious_hint": false
+      },
+      "redact_sensitive_path_in_reply": {
+        "description": "回复消息中隐藏敏感路径细节",
+        "type": "bool",
+        "hint": "仅展示必要文件名信息，减少路径暴露。",
+        "default": true,
+        "hidden": true,
+        "obvious_hint": false
+      }
+    },
+    "hidden": true,
+    "obvious_hint": false
+  },
+  "llm_tool_config": {
+    "description": "LLM 工具注册与提示配置",
+    "type": "object",
+    "hint": "用于定义工具名称、说明与意图识别增强词。",
+    "items": {
+      "tool_name": {
+        "description": "LLM 工具名称",
+        "type": "string",
+        "hint": "建议使用稳定名称，避免频繁变更影响模型记忆。",
+        "default": "send_local_file"
+      },
+      "tool_description": {
+        "description": "LLM 工具描述",
+        "type": "text",
+        "hint": "描述工具用途、输入与安全约束，帮助模型正确调用。",
+        "default": "在白名单目录内安全检索并发送文件；支持模糊匹配与歧义确认；禁止越权路径访问。",
+        "editor_mode": true,
+        "editor_language": "markdown",
+        "editor_theme": "vs-light"
+      },
+      "intent_keywords": {
+        "description": "文件发送意图关键词",
+        "type": "list",
+        "hint": "用于增强自然语言触发识别，如“发我”“传我”“发送文件”。",
+        "default": [
+          "发我",
+          "发一下",
+          "传我",
+          "发送文件",
+          "给我文档",
+          "把资料发来"
+        ]
+      }
+    }
+  },
+  "logging": {
+    "description": "日志配置",
+    "type": "object",
+    "hint": "建议记录状态日志，避免记录隐私与敏感内容。",
+    "items": {
+      "log_level": {
+        "description": "日志级别",
+        "type": "string",
+        "hint": "生产环境建议 info 或 warning。",
+        "default": "info",
+        "options": [
+          "debug",
+          "info",
+          "warning",
+          "error"
+        ]
+      },
+      "log_success_events": {
+        "description": "是否记录成功发送事件",
+        "type": "bool",
+        "hint": "可用于审计发送结果。",
+        "default": true
+      },
+      "log_failure_events": {
+        "description": "是否记录失败事件",
+        "type": "bool",
+        "hint": "建议开启，便于排障。",
+        "default": true
+      },
+      "log_redact_user_input": {
+        "description": "日志中脱敏用户原始文本",
+        "type": "bool",
+        "hint": "开启后仅记录摘要或结构化信息。",
+        "default": true
+      },
+      "log_redact_full_path": {
+        "description": "日志中隐藏完整文件路径",
+        "type": "bool",
+        "hint": "建议开启，避免敏感路径泄露。",
+        "default": true
+      }
+    }
+  },
+  "permission_policy": {
+    "description": "文件发送权限控制（默认所有人可用）",
+    "type": "object",
+    "hint": "用于限制哪些用户可以触发文件发送功能。默认 all 表示所有人可用；allowlist 表示仅白名单可用。",
+    "items": {
+      "mode": {
+        "description": "权限模式",
+        "type": "string",
+        "hint": "all=所有人；allowlist=仅白名单。",
+        "default": "all",
+        "options": [
+          "all",
+          "allowlist"
+        ]
+      },
+      "allowlist_sender_ids": {
+        "description": "允许使用的发送者ID白名单",
+        "type": "list",
+        "hint": "当 mode=allowlist 时生效。填写平台侧 sender_id（字符串）。",
+        "default": []
+      },
+      "deny_message": {
+        "description": "无权限时的提示语",
+        "type": "string",
+        "hint": "当用户无权限触发时返回的文本。",
+        "default": "你没有权限使用文件发送功能。"
+      }
+    },
+    "obvious_hint": true
+  }
+}
